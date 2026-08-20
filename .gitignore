@@ -36,3 +36,7 @@ Thumbs.db
 # Runtime data and logs
 logs/
 *.log
+
+# Python test cache
+__pycache__/
+*.py[cod]

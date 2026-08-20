@@ -7,22 +7,22 @@ one begins.
 
 - [x] Repository structure
 - [x] README, roadmap, license, and ignore rules
-- [ ] Choose the implementation language and target Minecraft version
-- [ ] Add a build system and continuous integration
+- [x] Choose C++20 and target Minecraft Java 1.21.1 (protocol 767)
+- [x] Add a CMake build and Windows/Linux continuous integration
 
 ## 1. Binary protocol basics
 
-- [ ] Byte buffer abstraction
-- [ ] VarInt encode and decode
-- [ ] Length-prefixed UTF-8 strings
-- [ ] Unit tests, including invalid and truncated input
+- [x] Byte buffer abstraction
+- [x] VarInt encode and decode
+- [x] Length-prefixed UTF-8 strings
+- [x] Unit tests, including invalid and truncated input
 
 ## 2. Server status client
 
-- [ ] TCP connection
-- [ ] Handshake packet
-- [ ] Status request and JSON response
-- [ ] Ping and latency measurement
+- [x] TCP connection
+- [x] Handshake packet
+- [x] Status request and JSON response
+- [x] Ping and latency measurement
 
 ## 3. Login and sessions
 

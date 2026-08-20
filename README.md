@@ -1,43 +1,65 @@
 # minbot
 
-Minecraft Java Edition bot built from scratch to explore networking, binary
-protocols, and autonomous agents.
+Minecraft Java Edition protocol client built from scratch in C++20. The project
+explores binary protocols, networking, and autonomous bot behavior without
+Mineflayer or another high-level bot framework.
 
-> [!IMPORTANT]
-> minbot is in early development. The protocol client and gameplay features are
-> not implemented yet.
+**Current version: `0.1` · Target: Minecraft Java `1.21.1` (protocol `767`)**
 
-## Goal
+## What works in 0.1
 
-Build a small, understandable Minecraft bot without high-level bot libraries.
-The project will implement the important protocol pieces directly and document
-the engineering decisions along the way.
+- Cross-platform TCP connection using system sockets
+- Minecraft VarInt and packet framing
+- Handshake and server status request
+- Raw status JSON output
+- Ping/pong latency measurement
+- Defensive parsing and protocol unit tests
+- Windows and Linux CI
 
-## Planned features
+Gameplay login, movement, chat, and pathfinding are later milestones. The
+roadmap never presents planned features as finished.
 
-- TCP connection and Minecraft handshake
-- VarInt and packet serialization
-- Server status and ping
-- Login to a local `offline-mode` test server
-- Keep-alive, chat, and basic movement
-- World state and simple pathfinding
-- Automated tests and continuous integration
+## Build
 
-## Principles
+You need CMake 3.20 or newer and a C++20 compiler.
 
-- No Mineflayer or similar high-level bot frameworks
-- Small modules with clear responsibilities
-- Tests for binary encoding and packet parsing
-- Honest documentation: planned work is never presented as finished
-- Testing only on private servers or servers where bots are allowed
+```bash
+cmake -S . -B build -DMINBOT_BUILD_TESTS=ON
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+```
 
-## Roadmap
+The executable is normally located at `build/minbot` on single-configuration
+generators or `build/Release/minbot.exe` with Visual Studio.
 
-See [docs/ROADMAP.md](docs/ROADMAP.md) for the development milestones.
+## Usage
 
-## Building
+```text
+minbot --version
+minbot status <host> [port] [protocol-version]
+```
 
-Build instructions will be added with the first working protocol milestone.
+Example for a local test server:
+
+```bash
+minbot status localhost 25565
+```
+
+The protocol version defaults to `767` for Minecraft Java 1.21.1. The final
+argument can still override it when testing another server version.
+
+## Project documentation
+
+- [Protocol notes](docs/PROTOCOL.md)
+- [Development roadmap](docs/ROADMAP.md)
+- [Versioning policy](docs/VERSIONING.md)
+- [Changelog](CHANGELOG.md)
+
+## Responsible use
+
+Run minbot only on private servers or servers where automated clients are
+allowed. Version 0.1 only reads public server-list status data and does not log
+in as a player.
 
 ## License
 
