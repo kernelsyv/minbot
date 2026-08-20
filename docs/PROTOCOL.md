@@ -1,38 +1,71 @@
-# Protocol notes for minbot 0.1
+# Protocol notes for minbot 0.1.2
 
-minbot 0.1 implements the status state of the Minecraft Java Edition protocol.
-It deliberately avoids high-level bot libraries.
+minbot implements selected parts of Minecraft Java Edition 1.21.1 protocol
+`767` directly in C++20. It does not use Mineflayer or another bot framework.
 
-## Request flow
+## Status flow
 
-1. Resolve the server hostname and open a TCP connection.
-2. Send a handshake packet with `next state = 1` (status).
-3. Send the empty status request packet.
-4. Read the server's length-prefixed JSON response.
-5. Send an eight-byte ping payload and verify the echoed pong.
+1. Open a TCP connection.
+2. Send handshake packet `0x00` with `next state = 1`.
+3. Send status request `0x00` and read the JSON response.
+4. Send ping `0x01` and verify the echoed 64-bit value.
 
-## Packet framing
+## Gameplay flow
 
-Each packet starts with a VarInt byte length. The framed body begins with a
-VarInt packet ID followed by packet-specific fields.
+1. Send handshake `0x00` with `next state = 2`.
+2. Send Login Start with a deterministic local UUID and username.
+3. Read login packets until Login Success, then acknowledge it.
+4. Send client settings and process configuration packets.
+5. Reply to configuration keep-alive, ping, cookie, and known-pack requests.
+6. Acknowledge Finish Configuration and enter the play state.
+7. Process play packets until the user enters `/quit` or the server disconnects.
 
-The status handshake contains:
+The play loop currently responds to keep-alive (`0x26`), position (`0x40`), and
+chunk-batch-finished (`0x0c`). It tracks map-chunk (`0x27`) and unload-chunk
+(`0x21`) coordinates. It sends chat with serverbound packet `0x06` and unsigned
+commands with `0x04`.
 
-- packet ID `0x00`;
-- protocol version as a signed VarInt;
-- server address as a VarInt-length-prefixed UTF-8 string;
-- server port as an unsigned 16-bit big-endian integer;
-- next state `0x01`.
+## Packet framing and compression
+
+Before compression is negotiated, every packet starts with a VarInt body
+length. The body begins with a VarInt packet ID followed by packet-specific
+fields. Integer and floating point fields use network byte order where the
+protocol requires it.
+
+After the login Set Compression packet, minbot stores the server threshold.
+Each following frame contains an outer packet length and a VarInt uncompressed
+length. A zero uncompressed length means the remaining bytes are below the
+threshold and are sent directly. A non-zero value means the remaining bytes are
+a zlib stream. minbot validates both wire and expanded sizes.
+
+## Scope of chunk processing
+
+Version 0.1.2 reads the `x` and `z` fields from chunk packets and maintains a
+map of currently loaded chunks. It stores the received packet size as a useful
+debugging summary. Heightmaps, NBT, section palettes, light arrays, biomes, and
+individual block states remain opaque bytes for now.
+
+That boundary keeps this release testable: “chunk received at `(x, z)`” is a
+working feature, while “the bot knows every block” is still a roadmap item.
+
+## Offline-mode compatibility
+
+Version 0.1.2 supports Set Compression but still rejects Encryption Request.
+It targets offline-mode servers with:
+
+```properties
+online-mode=false
+enforce-secure-profile=false
+```
+
+The normal `network-compression-threshold` value can remain enabled.
+Authenticated Microsoft account sessions are future work.
+
+The packet layouts and IDs were checked against the public
+[Minecraft data for protocol 767](https://raw.githubusercontent.com/PrismarineJS/minecraft-data/master/data/pc/1.21.1/protocol.json).
 
 ## Safety limits
 
 The network reader rejects negative, empty, truncated, overflowing, and larger
-than 4 MiB packets. A malformed server response becomes a normal error instead
-of an out-of-bounds read or unbounded allocation.
-
-## Version compatibility
-
-minbot 0.1 targets Minecraft Java Edition 1.21.1 and sends protocol version
-`767` by default. The status flow has remained stable across many Java Edition
-releases, so another protocol number can still be passed as the final CLI
-argument for testing.
+than 16 MiB packets. Strings also have explicit limits. Malformed server data
+becomes a normal error instead of an out-of-bounds read or unbounded allocation.

@@ -1,5 +1,6 @@
 #include "minbot/protocol.hpp"
 
+#include <bit>
 #include <limits>
 
 namespace minbot::protocol {
@@ -110,6 +111,44 @@ std::int64_t read_i64_be(std::span<const Byte> input, std::size_t& offset) {
     return static_cast<std::int64_t>(raw);
 }
 
+void append_i32_be(Bytes& output, std::int32_t value) {
+    const auto raw = static_cast<std::uint32_t>(value);
+    for (int shift = 24; shift >= 0; shift -= 8) {
+        output.push_back(static_cast<Byte>((raw >> shift) & 0xFFU));
+    }
+}
+
+std::int32_t read_i32_be(std::span<const Byte> input, std::size_t& offset) {
+    constexpr std::size_t width = sizeof(std::int32_t);
+    if (input.size() - offset < width) {
+        throw ProtocolError("truncated 32-bit integer");
+    }
+
+    std::uint32_t raw = 0;
+    for (std::size_t index = 0; index < width; ++index) {
+        raw = (raw << 8U) | input[offset++];
+    }
+    return static_cast<std::int32_t>(raw);
+}
+
+void append_f32_be(Bytes& output, float value) {
+    const auto raw = std::bit_cast<std::uint32_t>(value);
+    for (int shift = 24; shift >= 0; shift -= 8) {
+        output.push_back(static_cast<Byte>((raw >> shift) & 0xFFU));
+    }
+}
+
+void append_bool(Bytes& output, bool value) {
+    output.push_back(value ? 1U : 0U);
+}
+
+bool read_bool(std::span<const Byte> input, std::size_t& offset) {
+    if (offset >= input.size()) {
+        throw ProtocolError("truncated boolean");
+    }
+    return input[offset++] != 0U;
+}
+
 Bytes frame_packet(std::span<const Byte> payload) {
     if (payload.size() > static_cast<std::size_t>(std::numeric_limits<std::int32_t>::max())) {
         throw ProtocolError("packet payload is too large");
@@ -122,10 +161,25 @@ Bytes frame_packet(std::span<const Byte> payload) {
     return packet;
 }
 
+Bytes make_packet(std::int32_t packet_id, std::span<const Byte> payload) {
+    Bytes body;
+    append_varint(body, packet_id);
+    body.insert(body.end(), payload.begin(), payload.end());
+    return frame_packet(body);
+}
+
 Bytes make_handshake(
     std::int32_t protocol_version,
     std::string_view server_address,
     std::uint16_t server_port) {
+    return make_handshake(protocol_version, server_address, server_port, 1);
+}
+
+Bytes make_handshake(
+    std::int32_t protocol_version,
+    std::string_view server_address,
+    std::uint16_t server_port,
+    std::int32_t next_state) {
     if (server_address.empty()) {
         throw ProtocolError("server address cannot be empty");
     }
@@ -139,7 +193,7 @@ Bytes make_handshake(
     append_string(payload, server_address);
     payload.push_back(static_cast<Byte>((server_port >> 8U) & 0xFFU));
     payload.push_back(static_cast<Byte>(server_port & 0xFFU));
-    append_varint(payload, 0x01);
+    append_varint(payload, next_state);
     return frame_packet(payload);
 }
 

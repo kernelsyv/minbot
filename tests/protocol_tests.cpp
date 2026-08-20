@@ -128,6 +128,28 @@ void test_handshake() {
     expect_equal("handshake port", port, static_cast<std::uint16_t>(25565));
     expect_equal("handshake next state", minbot::protocol::read_varint(packet, offset), 1);
     expect_equal("handshake consumed bytes", offset, packet.size());
+
+    const auto login_packet = minbot::protocol::make_handshake(767, "localhost", 25565, 2);
+    offset = 0;
+    static_cast<void>(minbot::protocol::read_varint(login_packet, offset));
+    static_cast<void>(minbot::protocol::read_varint(login_packet, offset));
+    static_cast<void>(minbot::protocol::read_varint(login_packet, offset));
+    static_cast<void>(minbot::protocol::read_string(login_packet, offset));
+    offset += 2U;
+    expect_equal("login handshake next state", minbot::protocol::read_varint(login_packet, offset), 2);
+}
+
+void test_fixed_primitives() {
+    minbot::protocol::Bytes bytes;
+    minbot::protocol::append_i32_be(bytes, -123'456);
+    minbot::protocol::append_bool(bytes, true);
+    minbot::protocol::append_bool(bytes, false);
+
+    std::size_t offset = 0;
+    expect_equal("i32 round trip", minbot::protocol::read_i32_be(bytes, offset), -123'456);
+    expect_equal("true boolean", minbot::protocol::read_bool(bytes, offset), true);
+    expect_equal("false boolean", minbot::protocol::read_bool(bytes, offset), false);
+    expect_equal("fixed primitives consumed bytes", offset, bytes.size());
 }
 
 void test_status_and_ping() {
@@ -157,6 +179,7 @@ int main() {
     test_invalid_varints();
     test_strings();
     test_handshake();
+    test_fixed_primitives();
     test_status_and_ping();
 
     if (failures != 0) {

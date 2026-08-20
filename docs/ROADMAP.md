@@ -26,16 +26,21 @@ one begins.
 
 ## 3. Login and sessions
 
-- [ ] Login state packet loop
-- [ ] Compression support
-- [ ] Offline-mode local server login
-- [ ] Keep-alive handling
+- [x] Login state packet loop
+- [x] Compression support
+- [x] Offline-mode local server login
+- [x] Configuration state and client settings
+- [x] Keep-alive handling
 
 ## 4. Bot behavior
 
-- [ ] Position and movement
-- [ ] Chat commands
-- [ ] Basic world representation
+- [x] Position acknowledgement
+- [ ] Movement packets and physics
+- [x] Chat messages and unsigned commands
+- [x] Configurable register/login command sequences
+- [x] Basic loaded-chunk representation
+- [ ] Chunk section and block-palette decoding
+- [ ] NBT chat-component rendering
 - [ ] Simple pathfinding
 
 ## Later ideas
