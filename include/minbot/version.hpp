@@ -4,6 +4,6 @@
 
 namespace minbot {
 
-inline constexpr std::string_view version = "0.1.2";
+inline constexpr std::string_view version = "0.1.3";
 
 }  // namespace minbot

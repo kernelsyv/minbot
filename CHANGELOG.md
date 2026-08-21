@@ -2,6 +2,20 @@
 
 All notable changes to minbot are recorded in this file.
 
+## [0.1.3] - 2026-08-21
+
+### Added
+
+- Minimalist system architecture diagram for the README.
+- Visual connection lifecycle from TCP setup to the active play loop.
+- Incoming packet pipeline diagram covering framing, compression, dispatch,
+  and state updates.
+
+### Changed
+
+- Reorganized the README so the implementation is understandable before the
+  build and usage instructions.
+
 ## [0.1.2] - 2026-08-20
 
 ### Added
