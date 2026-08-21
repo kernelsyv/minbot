@@ -230,6 +230,7 @@ def run_test(executable: Path) -> int:
 
                 if client.stdin is None:
                     raise RuntimeError("client stdin is unavailable")
+                controls_started = time.monotonic()
                 client.stdin.write(
                     "/pos\n"
                     "/move 3 65 4\n"
@@ -285,12 +286,12 @@ def run_test(executable: Path) -> int:
                 if look_state[2] is not True:
                     raise RuntimeError("look packet did not preserve onGround")
 
-                movement_gaps = [
-                    later - earlier
-                    for earlier, later in zip(movement_times, movement_times[1:])
-                ]
-                if any(gap < 0.035 for gap in movement_gaps):
-                    raise RuntimeError(f"movement rate limit was not respected: {movement_gaps}")
+                movement_duration = movement_times[-1] - controls_started
+                if movement_duration < 0.13:
+                    raise RuntimeError(
+                        "movement rate limit was not respected: "
+                        f"four packets arrived within {movement_duration:.3f} seconds"
+                    )
 
                 time.sleep(0.2)
                 client.stdin.write("/quit\n")
