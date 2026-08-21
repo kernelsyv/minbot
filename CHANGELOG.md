@@ -13,6 +13,11 @@ All notable changes to minbot are recorded in this file.
 - Integration coverage for movement packets, relative teleports, and rate
   limiting.
 
+### Changed
+
+- Fetch the SHA-256-pinned zlib fallback from its official GitHub release
+  asset.
+
 ### Safety
 
 - Reject non-finite and out-of-range coordinates and pitch values.
