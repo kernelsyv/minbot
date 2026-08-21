@@ -2,6 +2,16 @@
 
 All notable changes to minbot are recorded in this file.
 
+## [0.1.4] - 2026-08-21
+
+### Changed
+
+- Reworked all README diagrams as restrained technical-documentation figures.
+- Replaced gradients, glows, decorative cards, and icon-heavy styling with a
+  neutral paper palette, direct labels, and consistent relationship lines.
+- Added explicit diagram scope, source version, protocol labels, and text
+  descriptions for accessibility and maintenance.
+
 ## [0.1.3] - 2026-08-21
 
 ### Added

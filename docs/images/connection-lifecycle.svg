@@ -1,101 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="460" viewBox="0 0 1200 460" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390" role="img" aria-labelledby="title description">
   <title id="title">Minecraft connection lifecycle</title>
-  <desc id="description">The bot connects over TCP, sends a handshake, logs in, exchanges configuration packets, and enters an active play loop.</desc>
+  <desc id="description">A left-to-right state flow: TCP connected, handshake sent, login accepted, configuration completed, then play state. Optional register and login chat commands run after joining servers that require them.</desc>
   <defs>
-    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0d1117"/>
-      <stop offset="1" stop-color="#111827"/>
-    </linearGradient>
-    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.25"/>
-    </filter>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0 0 10 5 0 10Z" fill="#475569"/>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0 0 8 4 0 8Z" fill="#1f2937"/>
     </marker>
     <style>
-      .font { font-family: Inter, "Segoe UI", Arial, sans-serif; }
-      .eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 2px; fill: #38bdf8; }
-      .heading { font-size: 30px; font-weight: 700; fill: #f8fafc; }
-      .subtitle { font-size: 15px; fill: #94a3b8; }
-      .step { font-size: 12px; font-weight: 700; letter-spacing: 1.3px; fill: #94a3b8; }
-      .title { font-size: 17px; font-weight: 700; fill: #f8fafc; }
-      .copy { font-size: 12.5px; fill: #94a3b8; }
+      .sans { font-family: Inter, "Segoe UI", Arial, sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+      .heading { font-size: 27px; font-weight: 650; fill: #111827; }
+      .sub { font-size: 14px; fill: #4b5563; }
+      .index { font-size: 11px; font-weight: 700; letter-spacing: 1px; fill: #6b7280; }
+      .state { font-size: 16px; font-weight: 650; fill: #111827; }
+      .copy { font-size: 12px; fill: #4b5563; }
+      .event { font-size: 10.5px; fill: #6b7280; }
+      .small { font-size: 11px; fill: #6b7280; }
     </style>
   </defs>
 
-  <rect width="1200" height="460" rx="24" fill="url(#background)"/>
-  <path d="M50 227 H1150" stroke="#263244" stroke-width="2"/>
+  <rect width="1200" height="390" fill="#fafaf8"/>
+  <g class="sans">
+    <text x="48" y="53" class="heading">Connection lifecycle</text>
+    <text x="48" y="79" class="sub">Each transition follows a server packet or completed exchange.</text>
+    <line x1="48" y1="104" x2="1152" y2="104" stroke="#d1d5db"/>
 
-  <g class="font">
-    <text x="58" y="56" class="eyebrow">CONNECTION LIFECYCLE</text>
-    <text x="58" y="94" class="heading">One session, five explicit stages.</text>
-    <text x="58" y="122" class="subtitle">Each transition is driven by protocol packets—not timing guesses.</text>
+    <!-- Connectors and event labels -->
+    <line x1="244" y1="192" x2="278" y2="192" stroke="#1f2937" stroke-width="1.4" marker-end="url(#arrow)"/>
+    <text x="261" y="126" text-anchor="middle" class="mono event">socket ready</text>
+    <line x1="454" y1="192" x2="488" y2="192" stroke="#1f2937" stroke-width="1.4" marker-end="url(#arrow)"/>
+    <text x="471" y="126" text-anchor="middle" class="mono event">Login Success</text>
+    <line x1="664" y1="192" x2="698" y2="192" stroke="#1f2937" stroke-width="1.4" marker-end="url(#arrow)"/>
+    <text x="681" y="126" text-anchor="middle" class="mono event">Finish Config</text>
+    <line x1="874" y1="192" x2="908" y2="192" stroke="#1f2937" stroke-width="1.4" marker-end="url(#arrow)"/>
+    <text x="891" y="126" text-anchor="middle" class="mono event">Play packets</text>
 
-    <!-- connectors -->
-    <path d="M201 227 H277" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M421 227 H497" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M641 227 H717" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
-    <path d="M861 227 H937" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+    <!-- States -->
+    <rect x="68" y="136" width="176" height="112" rx="3" fill="#ffffff" stroke="#9ca3af"/>
+    <text x="86" y="165" class="mono index">01</text>
+    <text x="86" y="197" class="state">TCP connect</text>
+    <text x="86" y="222" class="copy">open host and port</text>
 
-    <!-- step 1 -->
-    <g filter="url(#shadow)">
-      <circle cx="131" cy="227" r="70" fill="#161b22" stroke="#334155"/>
-      <circle cx="131" cy="227" r="46" fill="#172033"/>
-      <path d="M108 229 H154 M115 217 L108 229 115 241 M147 217 L154 229 147 241" fill="none" stroke="#94a3b8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-    </g>
-    <text x="131" y="326" text-anchor="middle" class="step">01 · CONNECT</text>
-    <text x="131" y="352" text-anchor="middle" class="title">TCP socket</text>
-    <text x="131" y="375" text-anchor="middle" class="copy">host + port</text>
+    <rect x="278" y="136" width="176" height="112" rx="3" fill="#ffffff" stroke="#9ca3af"/>
+    <text x="296" y="165" class="mono index">02</text>
+    <text x="296" y="197" class="state">Handshake</text>
+    <text x="296" y="222" class="copy">select login intent</text>
 
-    <!-- step 2 -->
-    <g filter="url(#shadow)">
-      <circle cx="351" cy="227" r="70" fill="#161b22" stroke="#334155"/>
-      <circle cx="351" cy="227" r="46" fill="#172033"/>
-      <path d="M328 240 C337 224 345 216 351 216 C358 216 365 224 374 240" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="351" cy="209" r="7" fill="#60a5fa"/>
-    </g>
-    <text x="351" y="326" text-anchor="middle" class="step">02 · HANDSHAKE</text>
-    <text x="351" y="352" text-anchor="middle" class="title">Choose intent</text>
-    <text x="351" y="375" text-anchor="middle" class="copy">status or login</text>
+    <rect x="488" y="136" width="176" height="112" rx="3" fill="#ffffff" stroke="#9ca3af"/>
+    <text x="506" y="165" class="mono index">03</text>
+    <text x="506" y="197" class="state">Login</text>
+    <text x="506" y="222" class="copy">identity + compression</text>
 
-    <!-- step 3 -->
-    <g filter="url(#shadow)">
-      <circle cx="571" cy="227" r="70" fill="#161b22" stroke="#334155"/>
-      <circle cx="571" cy="227" r="46" fill="#172033"/>
-      <circle cx="571" cy="215" r="10" fill="none" stroke="#c084fc" stroke-width="3"/>
-      <path d="M550 242 C554 230 562 226 571 226 C581 226 589 230 592 242" fill="none" stroke="#c084fc" stroke-width="3" stroke-linecap="round"/>
-    </g>
-    <text x="571" y="326" text-anchor="middle" class="step">03 · LOGIN</text>
-    <text x="571" y="352" text-anchor="middle" class="title">Offline identity</text>
-    <text x="571" y="375" text-anchor="middle" class="copy">username + compression</text>
+    <rect x="698" y="136" width="176" height="112" rx="3" fill="#ffffff" stroke="#9ca3af"/>
+    <text x="716" y="165" class="mono index">04</text>
+    <text x="716" y="197" class="state">Configuration</text>
+    <text x="716" y="222" class="copy">client settings exchange</text>
 
-    <!-- step 4 -->
-    <g filter="url(#shadow)">
-      <circle cx="791" cy="227" r="70" fill="#161b22" stroke="#334155"/>
-      <circle cx="791" cy="227" r="46" fill="#172033"/>
-      <path d="M769 215 H813 M769 227 H813 M769 239 H801" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="775" cy="215" r="3" fill="#fbbf24"/>
-      <circle cx="775" cy="227" r="3" fill="#fbbf24"/>
-      <circle cx="775" cy="239" r="3" fill="#fbbf24"/>
-    </g>
-    <text x="791" y="326" text-anchor="middle" class="step">04 · CONFIGURE</text>
-    <text x="791" y="352" text-anchor="middle" class="title">Client settings</text>
-    <text x="791" y="375" text-anchor="middle" class="copy">server configuration</text>
+    <rect x="908" y="136" width="224" height="112" rx="3" fill="#ffffff" stroke="#2255d6" stroke-width="2"/>
+    <rect x="908" y="136" width="6" height="112" fill="#2255d6"/>
+    <text x="932" y="165" class="mono index" fill="#2255d6">05 · ACTIVE</text>
+    <text x="932" y="197" class="state">Play</text>
+    <text x="932" y="222" class="copy">chat · chunks · keep-alive</text>
 
-    <!-- step 5 -->
-    <g filter="url(#shadow)">
-      <circle cx="1011" cy="227" r="72" fill="#13251f" stroke="#2f6b51" stroke-width="2"/>
-      <circle cx="1011" cy="227" r="46" fill="#123326"/>
-      <path d="M991 228 L1005 242 1032 211" fill="none" stroke="#34d399" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="1061" cy="177" r="16" fill="#34d399"/>
-      <path d="M1054 177 H1068 M1061 170 V184" stroke="#052e22" stroke-width="2.5" stroke-linecap="round"/>
-    </g>
-    <text x="1011" y="326" text-anchor="middle" class="step" fill="#6ee7b7">05 · PLAY</text>
-    <text x="1011" y="352" text-anchor="middle" class="title">Active loop</text>
-    <text x="1011" y="375" text-anchor="middle" class="copy">chat · chunks · keep-alive</text>
+    <!-- Post-join server authentication -->
+    <line x1="1020" y1="248" x2="1020" y2="285" stroke="#2255d6" stroke-width="1.4"/>
+    <line x1="1020" y1="285" x2="790" y2="285" stroke="#2255d6" stroke-width="1.4"/>
+    <rect x="602" y="269" width="188" height="33" rx="2" fill="#eef3ff" stroke="#a8bcef"/>
+    <text x="696" y="290" text-anchor="middle" class="mono small" fill="#173f9f">optional /register → /login</text>
 
-    <rect x="484" y="407" width="174" height="28" rx="14" fill="#231936" stroke="#4c2c6f"/>
-    <circle cx="501" cy="421" r="4" fill="#c084fc"/>
-    <text x="512" y="425" font-size="11.5" font-weight="600" fill="#d8b4fe">optional /register · /login</text>
+    <line x1="48" y1="346" x2="1152" y2="346" stroke="#d1d5db"/>
+    <text x="48" y="369" class="mono small">diagram: protocol state flow · source: minbot 0.1.4</text>
+    <text x="1152" y="369" text-anchor="end" class="mono small">Minecraft Java 1.21.1 · 767</text>
   </g>
 </svg>

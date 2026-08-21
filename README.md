@@ -4,7 +4,7 @@ Minecraft Java Edition protocol client built from scratch in C++20. The project
 explores binary protocols, networking, and autonomous bot behavior without
 Mineflayer or another high-level bot framework.
 
-**Current version: `0.1.3` · Target: Minecraft Java `1.21.1` (protocol `767`)**
+**Current version: `0.1.4` · Target: Minecraft Java `1.21.1` (protocol `767`)**
 
 ## How minbot works
 
@@ -13,26 +13,26 @@ another high-level bot framework between the C++ client and the server.
 
 ### System overview
 
-![minbot system overview](docs/images/system-overview.svg)
+[![minbot system overview](docs/images/system-overview.svg)](docs/images/system-overview.svg)
 
 The terminal controls a small protocol core, while focused modules keep chat,
 authentication, and the known chunk state separate from the network layer.
 
 ### Connection lifecycle
 
-![Minecraft connection lifecycle](docs/images/connection-lifecycle.svg)
+[![Minecraft connection lifecycle](docs/images/connection-lifecycle.svg)](docs/images/connection-lifecycle.svg)
 
 Every connection advances through explicit protocol states. In play state,
 the bot keeps the session alive and handles server events interactively.
 
 ### Incoming packet pipeline
 
-![Incoming Minecraft packet pipeline](docs/images/packet-pipeline.svg)
+[![Incoming Minecraft packet pipeline](docs/images/packet-pipeline.svg)](docs/images/packet-pipeline.svg)
 
 Packet boundaries, compression, and size checks are handled before a packet
 can reach chat, authentication, world, or session-state handlers.
 
-## What works in 0.1.3
+## What works in 0.1.4
 
 - Cross-platform TCP connection using system sockets
 - Minecraft VarInt and packet framing
