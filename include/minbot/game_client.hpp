@@ -2,9 +2,12 @@
 
 #include "minbot/connection.hpp"
 
+#include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -34,6 +37,16 @@ struct ChunkSummary {
     std::int32_t x = 0;
     std::int32_t z = 0;
     std::size_t packet_bytes = 0;
+};
+
+struct PlayerState {
+    double x = 0.0;
+    double y = 0.0;
+    double z = 0.0;
+    float yaw = 0.0F;
+    float pitch = 0.0F;
+    bool on_ground = false;
+    bool initialized = false;
 };
 
 struct GameEvent {
@@ -66,15 +79,20 @@ public:
     GameEvent process_next();
     void send_chat(std::string_view message);
     void authenticate();
+    PlayerState move_to(double x, double y, double z);
+    PlayerState look(float yaw, float pitch);
+    PlayerState jump();
     void close() noexcept;
 
     [[nodiscard]] bool is_in_play() const noexcept;
+    [[nodiscard]] PlayerState player_state() const;
     [[nodiscard]] std::size_t loaded_chunk_count() const noexcept;
 
 private:
     enum class State { login, configuration, play };
 
     void send_body(protocol::Bytes body);
+    void send_movement_body(protocol::Bytes body);
     void send_client_settings(std::int32_t packet_id);
     void handle_login_packet(std::span<const protocol::Byte> packet);
     GameEvent handle_configuration_packet(std::span<const protocol::Byte> packet);
@@ -82,8 +100,12 @@ private:
 
     GameOptions options_;
     std::unique_ptr<Connection> connection_;
-    State state_ = State::login;
+    std::atomic<State> state_ = State::login;
     std::unordered_map<std::uint64_t, ChunkSummary> chunks_;
+    mutable std::mutex player_mutex_;
+    PlayerState player_state_;
+    std::mutex movement_mutex_;
+    std::chrono::steady_clock::time_point last_movement_sent_{};
 };
 
 }  // namespace minbot

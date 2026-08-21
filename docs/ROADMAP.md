@@ -35,7 +35,8 @@ one begins.
 ## 4. Bot behavior
 
 - [x] Position acknowledgement
-- [ ] Movement packets and physics
+- [x] Position/look packets and rate-limited local controls
+- [ ] Gravity, collision-aware movement, and physics
 - [x] Chat messages and unsigned commands
 - [x] Configurable register/login command sequences
 - [x] Basic loaded-chunk representation

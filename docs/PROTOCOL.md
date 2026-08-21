@@ -1,4 +1,4 @@
-# Protocol notes for minbot 0.1.2
+# Protocol notes for minbot 0.1.5
 
 minbot implements selected parts of Minecraft Java Edition 1.21.1 protocol
 `767` directly in C++20. It does not use Mineflayer or another bot framework.
@@ -25,6 +25,22 @@ chunk-batch-finished (`0x0c`). It tracks map-chunk (`0x27`) and unload-chunk
 (`0x21`) coordinates. It sends chat with serverbound packet `0x06` and unsigned
 commands with `0x04`.
 
+## Player position and movement
+
+Clientbound position packet `0x40` initializes or updates the local player
+state. minbot reads all five relative flags, applies them to the previous
+`x/y/z/yaw/pitch` state, and acknowledges the teleport ID with packet `0x00`.
+
+Local controls use these serverbound play packets:
+
+- position `0x1a`: three 64-bit coordinates and `onGround`;
+- look `0x1c`: 32-bit yaw and pitch plus `onGround`.
+
+`/jump` sends two position packets: an airborne position 0.42 blocks higher,
+then a landing position at the previous height. This is deliberately described
+as basic movement rather than physics: it does not inspect collision shapes,
+apply gravity, or negotiate anti-cheat behavior.
+
 ## Packet framing and compression
 
 Before compression is negotiated, every packet starts with a VarInt body
@@ -40,7 +56,7 @@ a zlib stream. minbot validates both wire and expanded sizes.
 
 ## Scope of chunk processing
 
-Version 0.1.2 reads the `x` and `z` fields from chunk packets and maintains a
+minbot reads the `x` and `z` fields from chunk packets and maintains a
 map of currently loaded chunks. It stores the received packet size as a useful
 debugging summary. Heightmaps, NBT, section palettes, light arrays, biomes, and
 individual block states remain opaque bytes for now.
@@ -50,7 +66,7 @@ working feature, while “the bot knows every block” is still a roadmap item.
 
 ## Offline-mode compatibility
 
-Version 0.1.2 supports Set Compression but still rejects Encryption Request.
+minbot supports Set Compression but still rejects Encryption Request.
 It targets offline-mode servers with:
 
 ```properties
@@ -69,3 +85,6 @@ The packet layouts and IDs were checked against the public
 The network reader rejects negative, empty, truncated, overflowing, and larger
 than 16 MiB packets. Strings also have explicit limits. Malformed server data
 becomes a normal error instead of an out-of-bounds read or unbounded allocation.
+Movement rejects non-finite coordinates, bounds horizontal coordinates to
+±30,000,000, bounds vertical coordinates to ±2,048, constrains pitch to
+-90..90 degrees, and spaces movement packets by at least 50 milliseconds.

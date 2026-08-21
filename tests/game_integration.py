@@ -207,26 +207,90 @@ def run_test(executable: Path) -> int:
                 send_packet(connection, player_chat, compression_threshold)
                 position = b"\x40" + struct.pack(">dddffB", 1.0, 64.0, 2.0, 0.0, 0.0, 0) + encode_varint(17)
                 send_packet(connection, position, compression_threshold)
+
+                keep_alive_response = expect_packet(connection, 0x18, compression_threshold)
+                if keep_alive_response[-8:] != struct.pack(">q", keep_alive_id):
+                    raise RuntimeError("play keep-alive did not match")
+                teleport_response = expect_packet(connection, 0x00, compression_threshold)
+                if decode_varint(teleport_response, 1)[0] != 17:
+                    raise RuntimeError("teleport acknowledgement did not match")
+
+                relative_position = (
+                    b"\x40"
+                    + struct.pack(">dddffB", 2.0, 1.0, -1.0, 45.0, 10.0, 0x1F)
+                    + encode_varint(18)
+                )
+                send_packet(connection, relative_position, compression_threshold)
+                relative_teleport_response = expect_packet(connection, 0x00, compression_threshold)
+                if decode_varint(relative_teleport_response, 1)[0] != 18:
+                    raise RuntimeError("relative teleport acknowledgement did not match")
+
                 send_packet(connection, b"\x0c\x01", compression_threshold)
+                expect_packet(connection, 0x08, compression_threshold)
 
                 if client.stdin is None:
                     raise RuntimeError("client stdin is unavailable")
-                client.stdin.write("hello from bot\n")
+                client.stdin.write(
+                    "/pos\n"
+                    "/move 3 65 4\n"
+                    "/look 90 -15\n"
+                    "/jump\n"
+                    "hello from bot\n"
+                )
                 client.stdin.flush()
 
-                received_ids: set[int] = set()
+                received_ids: list[int] = []
+                movement_times: list[float] = []
+                positions: list[tuple[float, float, float, bool]] = []
+                look_state: tuple[float, float, bool] | None = None
                 chat_body = b""
-                for _ in range(4):
+                for _ in range(5):
                     body = receive_packet(connection, compression_threshold)
                     current_id = packet_id(body)
-                    received_ids.add(current_id)
+                    received_ids.append(current_id)
                     if current_id == 0x06:
                         chat_body = body
+                    elif current_id == 0x1A:
+                        _, offset = decode_varint(body)
+                        positions.append(struct.unpack_from(">ddd?", body, offset))
+                        movement_times.append(time.monotonic())
+                    elif current_id == 0x1C:
+                        _, offset = decode_varint(body)
+                        look_state = struct.unpack_from(">ff?", body, offset)
+                        movement_times.append(time.monotonic())
 
-                if received_ids != {0x00, 0x06, 0x08, 0x18}:
-                    raise RuntimeError(f"unexpected play responses: {sorted(received_ids)}")
+                if received_ids != [0x1A, 0x1C, 0x1A, 0x1A, 0x06]:
+                    raise RuntimeError(f"unexpected control packets: {received_ids}")
                 if b"hello from bot" not in chat_body:
                     raise RuntimeError("outgoing chat message is missing")
+                if len(positions) != 3:
+                    raise RuntimeError(f"expected three position packets, got {len(positions)}")
+
+                expected_positions = [
+                    (3.0, 65.0, 4.0, True),
+                    (3.0, 65.42, 4.0, False),
+                    (3.0, 65.0, 4.0, True),
+                ]
+                for actual, expected in zip(positions, expected_positions, strict=True):
+                    for actual_number, expected_number in zip(actual[:3], expected[:3], strict=True):
+                        if abs(actual_number - expected_number) > 1e-6:
+                            raise RuntimeError(f"unexpected movement position: {actual}")
+                    if actual[3] != expected[3]:
+                        raise RuntimeError(f"unexpected onGround value: {actual}")
+                if look_state is None or any(
+                    abs(actual - expected) > 1e-6
+                    for actual, expected in zip(look_state[:2], (90.0, -15.0), strict=True)
+                ):
+                    raise RuntimeError(f"unexpected look packet: {look_state}")
+                if look_state[2] is not True:
+                    raise RuntimeError("look packet did not preserve onGround")
+
+                movement_gaps = [
+                    later - earlier
+                    for earlier, later in zip(movement_times, movement_times[1:])
+                ]
+                if any(gap < 0.035 for gap in movement_gaps):
+                    raise RuntimeError(f"movement rate limit was not respected: {movement_gaps}")
 
                 time.sleep(0.2)
                 client.stdin.write("/quit\n")
@@ -241,7 +305,17 @@ def run_test(executable: Path) -> int:
         raise RuntimeError(f"minbot exited with {client.returncode}: {stderr.strip()}")
     if "test-secret" in stdout or "test-secret" in stderr:
         raise RuntimeError("authentication password leaked to process output")
-    for expected in ("Joined the play state", "[chunk] loaded 5, -2", "hello from mock player"):
+    for expected in (
+        "Joined the play state",
+        "[chunk] loaded 5, -2",
+        "hello from mock player",
+        "[world] position teleport 17",
+        "[world] position teleport 18",
+        "[control] position: x=3.000 y=65.000 z=1.000 yaw=45.0 pitch=10.0",
+        "[control] moved: x=3.000 y=65.000 z=4.000",
+        "[control] look: x=3.000 y=65.000 z=4.000 yaw=90.0 pitch=-15.0",
+        "[control] jumped: x=3.000 y=65.000 z=4.000",
+    ):
         if expected not in stdout:
             raise RuntimeError(f"missing output: {expected}")
 

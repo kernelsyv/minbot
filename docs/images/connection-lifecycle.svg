@@ -59,7 +59,7 @@
     <rect x="908" y="136" width="6" height="112" fill="#2255d6"/>
     <text x="932" y="165" class="mono index" fill="#2255d6">05 · ACTIVE</text>
     <text x="932" y="197" class="state">Play</text>
-    <text x="932" y="222" class="copy">chat · chunks · keep-alive</text>
+    <text x="932" y="222" class="copy">chat · movement · chunks</text>
 
     <!-- Post-join server authentication -->
     <line x1="1020" y1="248" x2="1020" y2="285" stroke="#2255d6" stroke-width="1.4"/>
@@ -68,7 +68,7 @@
     <text x="696" y="290" text-anchor="middle" class="mono small" fill="#173f9f">optional /register → /login</text>
 
     <line x1="48" y1="346" x2="1152" y2="346" stroke="#d1d5db"/>
-    <text x="48" y="369" class="mono small">diagram: protocol state flow · source: minbot 0.1.4</text>
+    <text x="48" y="369" class="mono small">diagram: protocol state flow · source: minbot 0.1.5</text>
     <text x="1152" y="369" text-anchor="end" class="mono small">Minecraft Java 1.21.1 · 767</text>
   </g>
 </svg>

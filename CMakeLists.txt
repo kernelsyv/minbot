@@ -25,6 +25,7 @@ endif()
 
 add_library(minbot_core
     src/connection.cpp
+    src/control.cpp
     src/game_client.cpp
     src/protocol.cpp
     src/status_client.cpp
@@ -61,6 +62,11 @@ if(MINBOT_BUILD_TESTS)
     target_link_libraries(minbot_protocol_tests PRIVATE minbot_core)
 
     add_test(NAME protocol COMMAND minbot_protocol_tests)
+
+    add_executable(minbot_control_tests tests/control_tests.cpp)
+    target_link_libraries(minbot_control_tests PRIVATE minbot_core)
+
+    add_test(NAME control COMMAND minbot_control_tests)
 
     find_package(Python3 COMPONENTS Interpreter QUIET)
     if(Python3_Interpreter_FOUND)

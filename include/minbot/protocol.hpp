@@ -32,7 +32,10 @@ void append_i64_be(Bytes& output, std::int64_t value);
 std::int64_t read_i64_be(std::span<const Byte> input, std::size_t& offset);
 void append_i32_be(Bytes& output, std::int32_t value);
 std::int32_t read_i32_be(std::span<const Byte> input, std::size_t& offset);
+void append_f64_be(Bytes& output, double value);
+double read_f64_be(std::span<const Byte> input, std::size_t& offset);
 void append_f32_be(Bytes& output, float value);
+float read_f32_be(std::span<const Byte> input, std::size_t& offset);
 void append_bool(Bytes& output, bool value);
 bool read_bool(std::span<const Byte> input, std::size_t& offset);
 

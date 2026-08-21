@@ -131,11 +131,44 @@ std::int32_t read_i32_be(std::span<const Byte> input, std::size_t& offset) {
     return static_cast<std::int32_t>(raw);
 }
 
+void append_f64_be(Bytes& output, double value) {
+    const auto raw = std::bit_cast<std::uint64_t>(value);
+    for (int shift = 56; shift >= 0; shift -= 8) {
+        output.push_back(static_cast<Byte>((raw >> shift) & 0xFFU));
+    }
+}
+
+double read_f64_be(std::span<const Byte> input, std::size_t& offset) {
+    constexpr std::size_t width = sizeof(double);
+    if (offset > input.size() || input.size() - offset < width) {
+        throw ProtocolError("truncated 64-bit float");
+    }
+
+    std::uint64_t raw = 0;
+    for (std::size_t index = 0; index < width; ++index) {
+        raw = (raw << 8U) | input[offset++];
+    }
+    return std::bit_cast<double>(raw);
+}
+
 void append_f32_be(Bytes& output, float value) {
     const auto raw = std::bit_cast<std::uint32_t>(value);
     for (int shift = 24; shift >= 0; shift -= 8) {
         output.push_back(static_cast<Byte>((raw >> shift) & 0xFFU));
     }
+}
+
+float read_f32_be(std::span<const Byte> input, std::size_t& offset) {
+    constexpr std::size_t width = sizeof(float);
+    if (offset > input.size() || input.size() - offset < width) {
+        throw ProtocolError("truncated 32-bit float");
+    }
+
+    std::uint32_t raw = 0;
+    for (std::size_t index = 0; index < width; ++index) {
+        raw = (raw << 8U) | input[offset++];
+    }
+    return std::bit_cast<float>(raw);
 }
 
 void append_bool(Bytes& output, bool value) {

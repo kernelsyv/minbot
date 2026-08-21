@@ -142,14 +142,24 @@ void test_handshake() {
 void test_fixed_primitives() {
     minbot::protocol::Bytes bytes;
     minbot::protocol::append_i32_be(bytes, -123'456);
+    minbot::protocol::append_f64_be(bytes, 12.5);
+    minbot::protocol::append_f32_be(bytes, -45.25F);
     minbot::protocol::append_bool(bytes, true);
     minbot::protocol::append_bool(bytes, false);
 
     std::size_t offset = 0;
     expect_equal("i32 round trip", minbot::protocol::read_i32_be(bytes, offset), -123'456);
+    expect_equal("f64 round trip", minbot::protocol::read_f64_be(bytes, offset), 12.5);
+    expect_equal("f32 round trip", minbot::protocol::read_f32_be(bytes, offset), -45.25F);
     expect_equal("true boolean", minbot::protocol::read_bool(bytes, offset), true);
     expect_equal("false boolean", minbot::protocol::read_bool(bytes, offset), false);
     expect_equal("fixed primitives consumed bytes", offset, bytes.size());
+
+    const minbot::protocol::Bytes truncated_float{0x3F, 0x80};
+    expect_protocol_error("truncated f32", [&] {
+        std::size_t bad_offset = 0;
+        static_cast<void>(minbot::protocol::read_f32_be(truncated_float, bad_offset));
+    });
 }
 
 void test_status_and_ping() {

@@ -66,7 +66,7 @@
     <text x="1134" y="226" text-anchor="end" class="mono small">messages</text>
     <line x1="972" y1="237" x2="1134" y2="237" stroke="#e5e7eb"/>
     <text x="972" y="260" class="row">world</text>
-    <text x="1134" y="260" text-anchor="end" class="mono small">chunks</text>
+    <text x="1134" y="260" text-anchor="end" class="mono small">pose / chunks</text>
 
     <!-- Safety note -->
     <rect x="270" y="301" width="640" height="38" rx="2" fill="#eef3ff" stroke="#a8bcef"/>
@@ -74,7 +74,7 @@
     <text x="292" y="325" class="mono small" fill="#173f9f">reject: malformed VarInt · invalid zlib size · oversized frame · truncated payload</text>
 
     <line x1="48" y1="366" x2="1152" y2="366" stroke="#d1d5db"/>
-    <text x="48" y="389" class="mono small">diagram: guarded processing pipeline · source: minbot 0.1.4</text>
+    <text x="48" y="389" class="mono small">diagram: guarded processing pipeline · source: minbot 0.1.5</text>
     <text x="1152" y="389" text-anchor="end" class="mono small">all paths shown are explicit</text>
   </g>
 </svg>

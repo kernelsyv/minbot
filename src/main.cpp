@@ -1,3 +1,4 @@
+#include "minbot/control.hpp"
 #include "minbot/game_client.hpp"
 #include "minbot/status_client.hpp"
 #include "minbot/version.hpp"
@@ -179,7 +180,7 @@ void print_event(const minbot::GameEvent& event) {
         std::cout << "[system] " << event.text << '\n';
         break;
     case Type::position:
-        std::cout << "[world] confirmed " << event.text << '\n';
+        std::cout << "[world] position " << event.text << '\n';
         break;
     case Type::disconnected:
         std::cout << "[world] " << event.text << '\n';
@@ -187,6 +188,17 @@ void print_event(const minbot::GameEvent& event) {
     case Type::none:
         break;
     }
+}
+
+void print_player_state(std::string_view label, const minbot::PlayerState& state) {
+    if (!state.initialized) {
+        std::cout << "[control] " << label << ": position not received from the server yet\n";
+        return;
+    }
+    std::cout << "[control] " << label << ": x=" << std::fixed << std::setprecision(3) << state.x
+              << " y=" << state.y << " z=" << state.z << " yaw=" << std::setprecision(1)
+              << state.yaw << " pitch=" << state.pitch
+              << " ground=" << (state.on_ground ? "yes" : "no") << '\n';
 }
 
 int run_play(int argc, char* argv[]) {
@@ -237,8 +249,8 @@ int run_play(int argc, char* argv[]) {
         std::cout << "Server register/login command sequence sent.\n";
     }
     std::cout
-        << "Joined the play state. Type chat messages, commands beginning with /,\n"
-        << "or /quit to stop the bot.\n";
+        << "Joined the play state. Local controls: /pos, /move <x> <y> <z>,\n"
+        << "/look <yaw> <pitch>, /jump, and /quit. Other lines are sent to chat.\n";
 
     std::atomic_bool stop = false;
     std::exception_ptr receiver_error;
@@ -265,11 +277,49 @@ int run_play(int argc, char* argv[]) {
 
     std::string line;
     while (!stop.load() && std::getline(std::cin, line)) {
-        if (line == "/quit") {
-            break;
-        }
-        if (!line.empty()) {
-            client.send_chat(line);
+        try {
+            const auto command = minbot::parse_control_line(line);
+            using CommandType = minbot::ControlCommand::Type;
+            switch (command.type) {
+            case CommandType::quit:
+                stop.store(true);
+                break;
+            case CommandType::show_position: {
+                const auto state = client.player_state();
+                std::scoped_lock lock(output_mutex);
+                print_player_state("position", state);
+                break;
+            }
+            case CommandType::move: {
+                const auto state = client.move_to(command.x, command.y, command.z);
+                std::scoped_lock lock(output_mutex);
+                print_player_state("moved", state);
+                break;
+            }
+            case CommandType::look: {
+                const auto state = client.look(command.yaw, command.pitch);
+                std::scoped_lock lock(output_mutex);
+                print_player_state("look", state);
+                break;
+            }
+            case CommandType::jump: {
+                const auto state = client.jump();
+                std::scoped_lock lock(output_mutex);
+                print_player_state("jumped", state);
+                break;
+            }
+            case CommandType::chat:
+                client.send_chat(command.text);
+                break;
+            case CommandType::none:
+                break;
+            }
+            if (command.type == CommandType::quit) {
+                break;
+            }
+        } catch (const std::exception& error) {
+            std::scoped_lock lock(output_mutex);
+            std::cerr << "[control] " << error.what() << '\n';
         }
     }
 

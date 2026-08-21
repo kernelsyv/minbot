@@ -2,6 +2,27 @@
 
 All notable changes to minbot are recorded in this file.
 
+## [0.1.5] - 2026-08-21
+
+### Added
+
+- Player position state with absolute and relative server teleport handling.
+- Local `/pos`, `/move`, `/look`, and `/jump` terminal controls.
+- Serverbound position and look packets for protocol 767.
+- Unit tests for control parsing and floating-point protocol primitives.
+- Integration coverage for movement packets, relative teleports, and rate
+  limiting.
+
+### Safety
+
+- Reject non-finite and out-of-range coordinates and pitch values.
+- Space outgoing movement packets by at least 50 milliseconds.
+
+### Known limitations
+
+- Jumping is a packet-level upward step without gravity or collision checks.
+- Navigation, block collision, and pathfinding are not implemented yet.
+
 ## [0.1.4] - 2026-08-21
 
 ### Changed

@@ -4,7 +4,7 @@ Minecraft Java Edition protocol client built from scratch in C++20. The project
 explores binary protocols, networking, and autonomous bot behavior without
 Mineflayer or another high-level bot framework.
 
-**Current version: `0.1.4` · Target: Minecraft Java `1.21.1` (protocol `767`)**
+**Current version: `0.1.5` · Target: Minecraft Java `1.21.1` (protocol `767`)**
 
 ## How minbot works
 
@@ -16,7 +16,8 @@ another high-level bot framework between the C++ client and the server.
 [![minbot system overview](docs/images/system-overview.svg)](docs/images/system-overview.svg)
 
 The terminal controls a small protocol core, while focused modules keep chat,
-authentication, and the known chunk state separate from the network layer.
+authentication, player position, and known chunk state separate from the
+network layer.
 
 ### Connection lifecycle
 
@@ -32,7 +33,7 @@ the bot keeps the session alive and handles server events interactively.
 Packet boundaries, compression, and size checks are handled before a packet
 can reach chat, authentication, world, or session-state handlers.
 
-## What works in 0.1.4
+## What works in 0.1.5
 
 - Cross-platform TCP connection using system sockets
 - Minecraft VarInt and packet framing
@@ -42,7 +43,10 @@ can reach chat, authentication, world, or session-state handlers.
 - Offline-mode player login through login, configuration, and play states
 - Negotiated zlib packet compression at any server threshold
 - Configuration and play keep-alive responses
-- Teleport and chunk-batch acknowledgements
+- Absolute and relative server-position updates with teleport acknowledgements
+- Rate-limited position, look, and basic jump packets
+- Local `/pos`, `/move`, `/look`, and `/jump` controls
+- Chunk-batch acknowledgements
 - Interactive outgoing chat and commands
 - Incoming plain player-chat messages
 - Basic world model that tracks loaded and unloaded chunk coordinates
@@ -52,8 +56,8 @@ can reach chat, authentication, world, or session-state handlers.
 - Windows and Linux CI
 
 Microsoft authentication, full NBT chat rendering, block palette decoding,
-movement, and pathfinding are not implemented yet. The roadmap never presents
-planned features as finished.
+collision-aware physics, and pathfinding are not implemented yet. Movement in
+this release is direct packet-level control, not autonomous navigation.
 
 ## Build
 
@@ -88,8 +92,21 @@ minbot play localhost MinBot 25565
 The protocol version defaults to `767` for Minecraft Java 1.21.1. The final
 argument can still override it when testing another server version.
 
-During `play`, enter a line to send chat, enter a command beginning with `/`,
-or enter `/quit` to stop the bot.
+During `play`, plain text and unknown slash commands are sent to the server.
+These commands are handled locally:
+
+```text
+/pos                 show the last server-confirmed or locally sent position
+/move <x> <y> <z>    send an absolute position
+/look <yaw> <pitch>  turn the player; pitch must be from -90 to 90
+/jump                send a small upward step and return to the same height
+/quit                stop the bot
+```
+
+Movement becomes available after the server supplies the initial player
+position. Coordinates are checked for finite, reasonable values, and movement
+packets are spaced at least 50 ms apart. `/jump` does not yet inspect blocks or
+simulate gravity.
 
 ## Registration and login plugins
 
